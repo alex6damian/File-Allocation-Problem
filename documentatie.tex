@@ -1,0 +1,198 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PACHETE NECESARE ---
+\usepackage[romanian]{babel}  % Setări pentru limba română
+\usepackage[utf8]{inputenc}   % Encoding
+\usepackage{geometry}         % Margini
+\usepackage{amsmath}          % Formule matematice
+\usepackage{graphicx}         % Imagini și grafice
+\usepackage{hyperref}         % Link-uri și cuprins interactiv
+\usepackage{listings}         % Pentru cod sursă
+\usepackage{xcolor}           % Culori pentru cod
+\usepackage{float}            % Poziționare figuri
+
+% --- SETĂRI PAGINĂ ---
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% --- CONFIGURARE COD SURSĂ (Go) ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinelanguage{Go}{
+  keywords={break, default, func, interface, select, case, defer, go, map, struct, chan, else, goto, package, switch, const, fallthrough, if, range, type, continue, for, import, return, var},
+  keywordstyle=\color{blue}\bfseries,
+  comment=[l]{//},
+  commentstyle=\color{codegreen}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{
+    backgroundcolor=\color{backcolour},   
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    commentstyle=\color{codegreen},
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    tabsize=4,
+    frame=single
+}
+
+% --- DATELE PROIECTULUI ---
+\title{\textbf{Abordare Microeconomică pentru Alocarea Optimă a Resurselor în Sisteme Distribuite}}
+\author{
+    \textbf{Studenți:} \\
+    Damian Alexandru (342) \\
+    Hornet Alex (342) \\
+    Opran Andrei (342) \\
+    \\
+    \textbf{Materie:} Sisteme Distribuite \\
+    \textbf{Profesor:} [Conf. Dr. Andrei Patrascu]
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% =========================================================================
+% 1. INTRODUCERE (Cerință: context, descriere problemă) [cite: 653]
+% =========================================================================
+\section{Introducere}
+
+% TODO: Scrie aici despre Problema Alocării Fișierelor (FAP).
+% Idei de atins:
+% - Context: Sistemele distribuite moderne trebuie să împartă resurse (fișiere, baze de date).
+% - Problema: Cum împărțim un fișier pe N noduri astfel încât să fie accesat rapid?
+% - Trade-off-ul: Dacă punem totul pe un nod, crește timpul de așteptare (coada). Dacă fragmentăm prea mult, crește costul de comunicare.
+% - Soluția propusă: O abordare microeconomică, unde nodurile "negociază" resursele pentru a minimiza costul global.
+
+Arhitecturile  distribuite reprezinta solutia optima pentru gestionarea volumelor mari de date si a sarcinilor computationale complexe.
+Un sistem distribuit poate fi vazut ca un set de agenti de calcul interconectati care partajeaza resurse pentru a indeplini sarcini comune.
+Partajarea resurselor aduce beneficii din punct de vedere al performantei, dar necesita un sistem eficient pentru alocarea si accesul la resurse.
+
+Proiectul nostru abordeaza \textbf{Problema Alocării Fișierelor (File Allocation Problem - FAP)}, ce consta in deteminarea unui mod optim de a imparti
+o resursa divizibila (de exemplu un fisier cu dimensiune mare, sau o baza de date) pe un set de noduri. Obiectivul final este de a maximiza performanta 
+sistemului distribuit, performanta fiind masurata prin minimizarea unui cost total.
+
+In principal, procesul de alocare a resurselor trebuie sa aiba in vedere doi factori, care daca ar fi luati individual, ar rezulta in strategii opuse:
+\begin{itemize}
+    \item \textbf{Costul de comunicare:} Minimizarea traficului se face optim prin plasarea resursei nedivizate pe nodul care o solicita cel mai frecvent, 
+    sau pe un nod central cu costul de comunicare minimal.
+    \item \textbf{Timpul de procesare:} Plasarea a mai multor resurse pe un singur nod rezulta in cozi de asteptare si aglomerarea procesorului, crescand timpul
+    de raspuns. Astfel, ajungem la concluzia ca trebuie sa distribuim uniform resursa pe toate nodurile.
+\end{itemize}
+
+In acest proiect se propune si se analizeaza o abordare \textbf{microeconomica} pentru rezolvarea problemei. Astfel, fiecare nod este considerat un agent
+economic dintr-o piata, care ia decizii bazate pe impactul (costul sau beneficiul) preluarii unei cantitati de resursa. Sistemele centralizate se scaleaza
+greu, si pot deveni puncte de esec. Algoritmii descentralizati din aceasta lucrare, beneficiind de resursele distribuite ale sistemului, permit nodurilor
+sa negocieze si sa migreze fractiuni din resursa pentru a atinge un echilibru economic in tot setul de noduri, minimizand costul de comunicare si
+timpul de procesare.
+
+% =========================================================================
+% 2. DESCRIEREA ALGORITMULUI SERIAL (Cerință: algoritm serial) [cite: 654]
+% =========================================================================
+\section{Descrierea Algoritmului Serial}
+
+% TODO: Descrie modelul matematic centralizat (Cum ar rezolva un singur calculator problema).
+% 1. Definește notațiile: lambda (rata sosire), mu (rata servire), x_i (fracțiunea alocată).
+% 2. Scrie formula de Cost Global (Eq 1 din PDF-ul teoriei):
+%    C = Suma( (Ci + K / (mu - lambda*xi)) * xi )
+% 3. Explică faptul că un algoritm serial ar calcula derivatele parțiale pentru toate nodurile și ar rezolva sistemul de ecuații centralizat.
+
+
+
+Problema optimizării poate fi formulată matematic astfel:
+\begin{equation}
+    C = \sum_{i=1}^{N} \left( C_i + \frac{K}{\mu - \lambda_i x_i} \right) x_i
+\end{equation}
+unde obiectivul este minimizarea $C$ sub constrângerea $\sum x_i = 1$.
+
+
+% =========================================================================
+% 3. DESCRIEREA VARIANTEI DISTRIBUITE (SPMD) [cite: 655]
+% =========================================================================
+\section{Descrierea Variantei Distribuite (SPMD)}
+
+% TODO: Explică transformarea în algoritm distribuit.
+% - Modelul SPMD (Single Program, Multiple Data): Fiecare nod rulează același cod (structura Node din Go).
+% - Descrie pașii unei iterații:
+%   1. Calcul Local: Fiecare nod își calculează Utilitatea Marginală (Derivata I) și, opțional, factorul de scalare (Derivata II).
+%   2. Comunicare: Schimb de mesaje (Broadcast sau Pairwise) pentru a afla starea celorlalți.
+%   3. Actualizare: Ajustarea variabilei locale x_i.
+
+Implementarea utilizează modelul SPMD, unde fiecare nod este o instanță independentă care execută următorul ciclu:
+
+\begin{lstlisting}[language=Go, caption={Structura nodului în implementare}]
+type Node struct {
+    ID         int
+    Lambda     float64 // Trafic
+    Allocation float64 // Resursa x_i
+}
+// Fiecare nod ruleaza intr-un Goroutine separat
+\end{lstlisting}
+
+% Aici poți detalia cei 3 algoritmi implementați (First Derivative, Second Derivative, Pairwise).
+
+
+% =========================================================================
+% 4. ANALIZĂ TEORETICĂ ȘI DISCUȚII [cite: 656]
+% =========================================================================
+\section{Analiză Teoretică și Discuții}
+
+% 4.1 Corectitudine [cite: 657]
+\subsection{Analiza Corectitudinii}
+% TODO: Discută premisele (ex: funcția de cost convexă).
+% Menționează proprietățile de Fezabilitate (suma x_i rămâne 1) și Monotonie (costul scade mereu).
+
+% 4.2 Complexitate [cite: 658]
+\subsection{Analiza Complexității}
+% TODO:
+% - Algoritm 1 & 2: Necesită coordonare globală (O(N) mesaje per iterație sau broadcast).
+% - Algoritm Pairwise: Comunicare locală (O(1) per pereche), dar convergență posibil mai lentă în număr de pași.
+
+% 4.3 Scalabilitate (Avantaje/Dezavantaje) [cite: 659]
+\subsection{Variația Numărului de Noduri și Scalabilitate}
+% TODO: Discută ce se întâmplă când N crește.
+% Pairwise este mai scalabil pentru N mare. Newton (Alg 2) e rapid pentru N mic/mediu.
+
+% 4.4 Exemple Topologii [cite: 659]
+\subsection{Exemplificare pe Topologii}
+% TODO: Adaugă graficele generate sau screenshot-uri din consolă.
+% Compară rezultatele pentru topologia Fully Connected vs. Ring (sau ce ai testat în Pairwise).
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{grafic_convergenta.png}
+    \caption{Evoluția costului global în funcție de iterații pentru cei 3 algoritmi.}
+\end{figure}
+
+
+% =========================================================================
+% 5. CONCLUZII
+% =========================================================================
+\section{Concluzii}
+% TODO: Sumarizează ce ai demonstrat (Algoritmul 2 e cel mai rapid, Pairwise e cel mai robust).
+
+
+% =========================================================================
+% BIBLIOGRAFIE
+% =========================================================================
+\begin{thebibliography}{9}
+\bibitem{kurose}
+  J. F. Kurose și R. Simha,
+  \textit{A Microeconomic Approach to Optimal Resource Allocation in Distributed Computer Systems},
+  IEEE Transactions on Computers, Vol. 38, No. 5, May 1989.
+
+\bibitem{implementare}
+  Sursă cod proiect: \texttt{resource\_allocation.go}.
+\end{thebibliography}
+
+\end{document}
