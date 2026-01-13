@@ -48,11 +48,11 @@
 \author{
     \textbf{Studenți:} \\
     Damian Alexandru (342) \\
-    Hornet Alex (342) \\
+    Hornet Alex-Andrei (342) \\
     Opran Andrei (342) \\
     \\
     \textbf{Materie:} Sisteme Distribuite \\
-    \textbf{Profesor:} [Conf. Dr. Andrei Patrascu]
+    \textbf{Profesor:} Conf. Dr.\ Andrei Patrascu
 }
 \date{}
 
@@ -90,6 +90,11 @@ In principal, procesul de alocare a resurselor trebuie sa aiba in vedere doi fac
     de raspuns. Astfel, ajungem la concluzia ca trebuie sa distribuim uniform resursa pe toate nodurile.
 \end{itemize}
 
+% NOTE:
+% Utilitatea marginală este răspunsul la întrebarea: „Cât de mult câștig (sau pierd) dacă mai primesc ÎNCĂ O unitate din resursă?”
+% Utilitatea marginală este reprezentată matematic prin derivata parțială a funcției de cost în raport cu variabila xi​ a nodului respectiv,
+% indicând contribuția specifică a acelui nod la performanța globală dacă i se modifică alocarea
+
 In acest proiect se propune si se analizeaza o abordare \textbf{microeconomica} pentru rezolvarea problemei. Astfel, fiecare nod este considerat un agent
 economic dintr-o piata, care ia decizii bazate pe impactul (costul sau beneficiul) preluarii unei cantitati de resursa. Sistemele centralizate se scaleaza
 greu, si pot deveni puncte de esec. Algoritmii descentralizati din aceasta lucrare, beneficiind de resursele distribuite ale sistemului, permit nodurilor
@@ -108,12 +113,57 @@ timpul de procesare.
 % 3. Explică faptul că un algoritm serial ar calcula derivatele parțiale pentru toate nodurile și ar rezolva sistemul de ecuații centralizat.
 
 
+Pentru a descrie algoritmul serial, presupunem ca avem un agent de calcul care executa optimizarea pentru intregul sistem, avand acces la toate
+informatiile despre starea retelei.
 
-Problema optimizării poate fi formulată matematic astfel:
+\subsection{Definirea Parametrilor}
+Algoritmul utilizat este bazat pe cel din lucrarea scrisa de Kurose si Simha. Consideram un sistem format din \(N\) noduri, cu urmatoarele variabile:
+
+\begin{itemize}
+    \item $\lambda$: Rata totala de sosire a cererilor in sistem, reprezentand intensitatea globala a traficului care trebuie procesat 
+    ($\lambda=\Sigma_{i=1}^{n}\lambda_{i}$).
+    
+    \item $\mu$: Rata medie de servire a unui nod. Timpul de servire se modeleaza ca fiind o variabile aleatoare exponentiala cu media $1/\mu$.
+    
+    \item $x_i$: Cantitatea de resursa alocata nodului $i$, din totalitatea de resurse a intregului sistem. Suma cantitatilor alocate tuturor
+    nodurilor este unitara, deoarece resursa este unica ($\sum_{i=1}^{N} x_i = 1$).
+    
+    \item $C_i$: Costul mediu de comunicare pentru a accesa resursa stocata pe nodul $i$.
+\end{itemize}
+
+\subsection{Functia de Cost Global}
+
+Performanta sistemului depinde de viteza comunicarii intre noduri si capacitatea de procesare a fiecarui nod. Timpul de asteptare la un nod este
+aratat de modelul M/M/1 din teoria cozilor (sosiri aleatoare tip Poisson, timpi de servire cu distribuire exponentiala si un
+singur procesor de deservire pe fiecare nod). Intarzierea este inversul capacitatii neutilizate a sistemului, valoarea sa formandu-se in functie de $x_i$:
 \begin{equation}
-    C = \sum_{i=1}^{N} \left( C_i + \frac{K}{\mu - \lambda_i x_i} \right) x_i
+    T_i = \frac{1}{\mu - \lambda x_i}
 \end{equation}
-unde obiectivul este minimizarea $C$ sub constrângerea $\sum x_i = 1$.
+
+Definim mai jos functia de cost global, reprezentand baza problemei de optimizare, ce insumeaza costurile fiecarui nod ponderate cu cantitatea de 
+resursa detinuta de nodul respectiv:
+
+\begin{equation}
+    C = \sum_{i=1}^{N} \left( C_i + \frac{K}{\mu - \lambda x_i} \right) x_i
+\end{equation}
+
+In ecuatia de cost global, importanta relativa dintre timpul de raspuns si costul de comunicare este caracterizata de constanta de ponderare $K$.
+
+Obiectivul algoritmului este minimizarea valorii $C$, luand in considerare $\mu > \lambda x_i$ si $\sum x_i = 1$.
+
+\subsection{Limitarile Algormitmului Serial}
+
+Prespunem existenta unui nod central ce are acces la toti parametrii sistemului ($\lambda, \mu, C_i$) si care calculeaza derivatele partiale ale functiei de cost in raport
+cu $x_i$ pentru a gasi minimul global.
+
+Aceasta abordare aduce rezultatele dorite, insa avem urmatoarele dezavantaje in contextul sistemelor distribuite:
+
+\begin{enumerate}
+    \item \textbf{Lipsa de siguranta:} Daca nodul central se defectioneaza, intregul proces de alocare din sistem nu ma poate functiona.
+    
+    \item \textbf{Ignorarea puterii de calcul distribuite:} Calculul serial nu foloseste capacitatea computationala a intregului sistem, ci incarca un singur nod cu 
+    munca de optimizare
+\end{enumerate}
 
 
 % =========================================================================
@@ -192,7 +242,7 @@ type Node struct {
   IEEE Transactions on Computers, Vol. 38, No. 5, May 1989.
 
 \bibitem{implementare}
-  Sursă cod proiect: \texttt{resource\_allocation.go}.
+  Sursă cod proiect: \texttt{Implementation/resource\_allocation.go}.
 \end{thebibliography}
 
 \end{document}
