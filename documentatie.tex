@@ -48,11 +48,11 @@
 \author{
     \textbf{Studenți:} \\
     Damian Alexandru (342) \\
-    Hornet Alex-Andrei (342) \\
+    Horneț Alex-Andrei (342) \\
     Opran Andrei (342) \\
     \\
     \textbf{Materie:} Sisteme Distribuite \\
-    \textbf{Profesor:} Conf. Dr.\ Andrei Patrascu
+    \textbf{Profesor:} Conf. Dr.\ Andrei Pătrașcu
 }
 \date{}
 
@@ -178,18 +178,83 @@ Aceasta abordare aduce rezultatele dorite, insa avem urmatoarele dezavantaje in 
 %   2. Comunicare: Schimb de mesaje (Broadcast sau Pairwise) pentru a afla starea celorlalți.
 %   3. Actualizare: Ajustarea variabilei locale x_i.
 
-Implementarea utilizează modelul SPMD, unde fiecare nod este o instanță independentă care execută următorul ciclu:
+% Aici poți detalia cei 3 algoritmi implementați (First Derivative, Second Derivative, Pairwise).
 
-\begin{lstlisting}[language=Go, caption={Structura nodului în implementare}]
+Pentru a transpune algoritmul serial in formatul \textbf{SPMD (Single Program, Multiple Data)}, fiecare nod ruleaza acelasi cod identic, dar foloseste seturi
+de date diferite (rata de sosire $\lambda_i$ si alocarea $x_i$, ambele specifice nodului respectiv)
+
+In implementarea realizata in limbajul \textbf{Go}, simularea nodurilor se face prin intermediul a \textit{Goroutines}. Fiecare nod este tratat ca un proces
+independent care comunica cu celelalte pentru a atinge un echilibru global pe intregul sistem.
+
+\begin{lstlisting}[language=Go, caption={Structura de date a Nodului (din resource\_allocation.go)}]
 type Node struct {
     ID         int
-    Lambda     float64 // Trafic
-    Allocation float64 // Resursa x_i
+    Lambda     float64 // Rata de sosire (cereri/sec)
+    Mu         float64 // Capacitatea de procesare
+    Allocation float64 // x_i (Resursa detinuta)
 }
-// Fiecare nod ruleaza intr-un Goroutine separat
 \end{lstlisting}
 
-% Aici poți detalia cei 3 algoritmi implementați (First Derivative, Second Derivative, Pairwise).
+Optimizarea sistemului se face iterativ, la fiecare pas nodurile executa un ciclu compus din trei pasi:
+
+\begin{enumerate}
+    \item \textbf{Calcul Local:} Nodul isi evalueaza performanta curenta calculand utilitatea marginala (cat de mult castiga, sau pierde, daca primeste inca o unitate din resursa, notat cu $U'_i$,).
+    \item \textbf{Comunicare:} Nodul schimba informatii despre utilitatea marginala cu celelalte noduri din retea.
+    \item \textbf{Actualizare:} Pe baza diferentelor de utilitate, nodul isi modifica cantitatea de resursa $x_i$.
+    Astfel, nodurile cu o utilitate marginala peste medie primesc mai multe resurse.
+\end{enumerate}
+
+In acest proiect au fost implementati 3 algoritmi care respecta ciclul anterior mentionat, diferentele fiind in pasii de comunicare si actualizare.
+
+
+\subsection{Algoritmul bazat pe Prima Derivata (Gradient Descent)}
+
+Algoritmul bazat pe prima derivata reprezinta algoritmul fundamental, implementat in functia \texttt{FirstDerivativeAlgorithm}. Fiecare nod calculeaza
+prima derivata a functiei de cost, echivalenta cu utilitatea marginala, folosind functia \texttt{ComputeFirstDerivative}, ce are urmatorul flux de lucru:
+
+\begin{itemize}
+    \item Toate nodurile trimit $U'_i$ (derivata) catre un proces de agregare care calculeaza media globala $\overline{U'}$.
+    \item Nodurile care au $U'_i > \overline{U'}$ reprezinta nodurile care au nevoie de mai multe resurse, si primesc o alocare suplimentara,
+    iar celelalte nodurile care au $U'_i < \overline{U'}$ cedeaza resurse.
+    \item Pasul de modificare este fixat si reglat de catre parametrul $\alpha$, modificarea referindu-se la diferenta dintre utilitatea marginala medie
+    si utilitatea marginala a unui nod $x_i$.
+\end{itemize}
+
+Acest algoritm nu tine cont de curbura functiei de cost, astfel necesita un numar mare de iteratii pentru a converge.
+
+
+
+\subsection{Algoritmul bazat pe a Doua Derivata (Metoda Newton)}
+
+Algoritmul bazat pe a doua derivata, implementat in \texttt{SecondDerivativeAlgorithm}, utilizeaza informatii suplimentare despre acceleratia costului pentru a accelera convergenta.
+
+Pe langa derivata intai, fiecare nod calculeaza si inversul derivatei a doua, notata cu $k_i$.
+
+\begin{equation}
+    k_i = \frac{1}{\frac{\partial^2 U}{\partial x_i^2}}
+\end{equation}
+
+Aceasta valoare este calculata in cod prin functia \texttt{Compute1onSecondDerivative}.
+
+Avantajul acestui algoritm fata de cel precedent este ajustarea dinamica a pasului de invatare pentru fiecare nod. Nodurile isi scaleaza modificarea
+alocarii ($\Delta x_i$) proportional cu $k_i$, ceea ce permite o convergenta mult mai rapida.
+
+\subsection{Algoritmul Pairwise Interaction}
+
+Primii doi algoritmi prezentati necesita o forma de sincronizare gloabala a retelei pentru a calcula media derivatelor, ceea ce ingreuneaza
+scalabilitatea. Algoritmul Pairwise Interaction, implementat in \texttt{PairwiseAlgorithm}, elimina aceasta sincronizare, ceea ce faciliteaza scalabilitate.
+
+Comunicarea se face stric intre vecini, definiti printr-o topologie de retea.
+
+\begin{lstlisting}[language=Go, caption={Actualizarea in perechi (din resource\_allocation.go)}]
+// Schimb de resurse intre nodul i si nodul j
+exchange := -alpha * (ki * kj) / (ki + kj) * (di - dj)
+deltas[i] += exchange
+deltas[j] -= exchange
+\end{lstlisting}
+
+Echilibrarea se face prin tranzactii bilaterale: daca nodul $i$ are o utilitate marginala mai mare decat venicul $j$, resursele sunt transferate de
+la $j$ la $i$, si viceversa. Sistemul atinge echilibrul global in momentul in care diferentele dintre utilitati sunt neglijabile.
 
 
 % =========================================================================
