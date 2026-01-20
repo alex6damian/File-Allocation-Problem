@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"os"
+	"path/filepath"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -10,8 +12,21 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
+// CreateDir creeaza directorul daca nu exista
+func CreateDir(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0755) // rwx owner, rx group+others
+	}
+	return nil
+}
+
 // PlotConvergence genereaza grafic cu evolutia costului
 func PlotConvergence(systems []*System, names []string, filename string) error {
+	dir := filepath.Dir(filename)
+	if err := CreateDir(dir); err != nil {
+		return fmt.Errorf("Eroare la creare %s: %w", dir, err)
+	}
+
 	p := plot.New()
 
 	p.Title.Text = "Convergenta algoritmilor"
@@ -47,15 +62,20 @@ func PlotConvergence(systems []*System, names []string, filename string) error {
 	return p.Save(8*vg.Inch, 6*vg.Inch, filename)
 }
 
-// PlotAllocations generează bar chart cu alocările finale per nod
+// PlotAllocations genereaza bar chart cu alocarile finale per nod
 func PlotAllocations(systems []*System, names []string, filename string) error {
+	dir := filepath.Dir(filename)
+	if err := CreateDir(dir); err != nil {
+		return fmt.Errorf("Eroare la creare %s: %w", dir, err)
+	}
+
 	p := plot.New()
 
-	p.Title.Text = "Alocări finale per nod"
+	p.Title.Text = "Alocari finale per nod"
 	p.Y.Label.Text = "Alocare (xi)"
 	p.X.Label.Text = "Noduri"
 
-	w := vg.Points(20) // lățime bare
+	w := vg.Points(20) // latime bare
 
 	// Generare etichete pentru noduri
 	nodeLabels := make([]string, len(systems[0].Nodes))
@@ -87,11 +107,16 @@ func PlotAllocations(systems []*System, names []string, filename string) error {
 	return p.Save(8*vg.Inch, 6*vg.Inch, filename)
 }
 
-// PlotDerivatives generează grafic cu derivatele finale (verificare Nash equilibrium)
+// PlotDerivatives generează grafic cu derivatele finale (verificare Nash)
 func PlotDerivatives(systems []*System, names []string, filename string) error {
+	dir := filepath.Dir(filename)
+	if err := CreateDir(dir); err != nil {
+		return fmt.Errorf("Eroare la creare %s: %w", dir, err)
+	}
+
 	p := plot.New()
 
-	p.Title.Text = "Derivate finale (verificare Nash equilibrium)"
+	p.Title.Text = "Derivate finale (verificare Nash)"
 	p.Y.Label.Text = "dU/dxi"
 	p.X.Label.Text = "Noduri"
 
@@ -127,12 +152,17 @@ func PlotDerivatives(systems []*System, names []string, filename string) error {
 	return p.Save(8*vg.Inch, 6*vg.Inch, filename)
 }
 
-// PlotAllocationEvolution arată cum evoluează alocările în timp (opțional - bonus)
+// PlotAllocationEvolution arata cum evolueaza alocarile in timp
 func PlotAllocationEvolution(sys *System, allocationHistory [][]float64, filename string) error {
+	dir := filepath.Dir(filename)
+	if err := CreateDir(dir); err != nil {
+		return fmt.Errorf("Eroare la creare %s: %w", dir, err)
+	}
+
 	p := plot.New()
 
-	p.Title.Text = "Evoluția alocărilor în timp"
-	p.X.Label.Text = "Iterații"
+	p.Title.Text = "Evolutia alocarilor in timp"
+	p.X.Label.Text = "Iteratii"
 	p.Y.Label.Text = "Alocare xi"
 	p.Add(plotter.NewGrid())
 
@@ -149,7 +179,6 @@ func PlotAllocationEvolution(sys *System, allocationHistory [][]float64, filenam
 		}
 		line.Color = plotutil.Color(nodeID)
 		line.Width = vg.Points(1.5)
-
 		p.Add(line)
 		p.Legend.Add(fmt.Sprintf("Nod %d", nodeID), line)
 	}

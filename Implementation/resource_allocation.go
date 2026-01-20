@@ -69,7 +69,7 @@ func (s *System) ComputeCost() float64 {
 
 		// Ti = 1 / (μ - Σλ · xi)
 		denominator := node.Mu - s.TotalLambda*xi // rata efectiva de sosire/numitorul
-		if denominator <= 0 {                     // verificare stabilitate sistem
+		if denominator <= 0.01 {                  // verificare stabilitate sistem
 			// sistem instabil, cost infinit
 			return math.Inf(1)
 		}
@@ -113,7 +113,8 @@ func (s *System) Compute1onSecondDerivative(nodeIndex int) float64 {
 	}
 
 	// ki = 1 / (d²U/dxi²)
-	return 1.0 / secondDerivative
+	ki := 1.0 / secondDerivative
+	return math.Min(ki, 5.0) // limitare pentru stabilitate
 }
 
 // Normalize asigura ca suma alocarilor este 1
@@ -180,11 +181,12 @@ func FirstDerivativeAlgorithm(s *System, alpha float64, maxIter int, epsilon flo
 		// 4. Actualizare alocari
 		newAllocations := make([]float64, n)
 		for i := range n {
-			delta := alpha * (derivatives[i] - avgDerivative)
+			delta := -alpha * (derivatives[i] - avgDerivative)
 			// delta > 0 => crestere alocare
 			// delta < 0 => scadere alocare
 			// delta = 0 => echilibru
-			newAllocations[i] = math.Max(0.001, s.Nodes[i].Allocation+delta) // evitam alocari 0
+			newAlloc := s.Nodes[i].Allocation + delta
+			newAllocations[i] = math.Max(0.001, math.Min(0.90, newAlloc)) // evitam alocari 0
 		}
 
 		// 5. Normalizare alocari
@@ -255,11 +257,12 @@ func SecondDerivativeAlgorithm(s *System, alpha float64, maxIter int, epsilon fl
 		// 4. Actualizare cu pas individual (dependent de curbura, adica k valoarea)
 		newAllocations := make([]float64, n)
 		for i := range n {
-			delta := alpha * kValues[i] * (derivatives[i] - weightedAvg)
+			delta := -alpha * kValues[i] * (derivatives[i] - weightedAvg)
 			// delta > 0 => crestere alocare
 			// delta < 0 => scadere alocare
 			// delta = 0 => echilibru
-			newAllocations[i] = math.Max(0.001, s.Nodes[i].Allocation+delta) // evitam alocari 0
+			newAlloc := s.Nodes[i].Allocation + delta
+			newAllocations[i] = math.Max(0.001, math.Min(0.90, newAlloc)) // evitam alocari 0
 		}
 
 		// Normalizare alocari
@@ -350,7 +353,8 @@ func PairwiseAlgorithm(s *System, topology []Edge, alpha float64, maxIter int, e
 		// 4. Actualizare alocari
 		newAllocations := make([]float64, n)
 		for i := range n {
-			newAllocations[i] = math.Max(0.001, s.Nodes[i].Allocation+deltas[i]) // evitam alocari 0
+			newAlloc := s.Nodes[i].Allocation + deltas[i]
+			newAllocations[i] = math.Max(0.001, math.Min(0.90, newAlloc)) // evitam alocari 0
 		}
 
 		// Normalizare alocari
@@ -417,11 +421,11 @@ func main() {
 
 	// Test 1: Prima derivata
 	system1 := CreateNewSystem(lambdas, mu, K)
-	FirstDerivativeAlgorithm(system1, 0.05, 100, 0.001)
+	FirstDerivativeAlgorithm(system1, 0.02, 200, 0.001)
 
 	// Test 2: Derivata a doua
 	system2 := CreateNewSystem(lambdas, mu, K)
-	SecondDerivativeAlgorithm(system2, 0.5, 100, 0.001)
+	SecondDerivativeAlgorithm(system2, 0.01, 100, 0.001)
 
 	// Test 3: Pairwise
 	system3 := CreateNewSystem(lambdas, mu, K)
@@ -429,7 +433,7 @@ func main() {
 		{0, 1}, {0, 2}, {0, 3},
 		{1, 2}, {1, 3}, {2, 3},
 	}
-	PairwiseAlgorithm(system3, topology, 0.3, 200, 0.01)
+	PairwiseAlgorithm(system3, topology, 0.05, 200, 0.01)
 
 	// Sumar
 	fmt.Println("\n" + strings.Repeat("=", 60))
@@ -445,4 +449,23 @@ func main() {
 	fmt.Printf("%-20s %-12d %.4f      xx\n",
 		"Pairwise", len(system3.CostHistory), system3.ComputeCost())
 	fmt.Println(strings.Repeat("=", 60))
+
+	// Generare ploturi
+	systems := []*System{system1, system2, system3}
+	names := []string{"First Derivative", "Second Derivative", "Pairwise"}
+
+	// Grafic convergenta
+	if err := PlotConvergence(systems, names, "plots/convergence.png"); err != nil {
+		fmt.Printf("Eroare generare plot: %v\n", err)
+	}
+
+	// Grafic alocari finale
+	if err := PlotAllocations(systems, names, "plots/allocations.png"); err != nil {
+		fmt.Printf("Eroare generare plot: %v\n", err)
+	}
+
+	// Grafic derivate pentru verificare Nash
+	if err := PlotDerivatives(systems, names, "plots/derivatives.png"); err != nil {
+		fmt.Printf("Eroare generare plot: %v\n", err)
+	}
 }
