@@ -419,13 +419,17 @@ func main() {
 	fmt.Printf("Lambda values: %v\n", lambdas)
 	fmt.Printf("μ (service rate): %.1f\n\n", mu)
 
+	// Testare configuratii foarte precise
+
 	// Test 1: Prima derivata
 	system1 := CreateNewSystem(lambdas, mu, K)
-	FirstDerivativeAlgorithm(system1, 0.02, 200, 0.001)
+	// simplificat pentru precizie redusa: 0.02, 200, 0.001
+	FirstDerivativeAlgorithm(system1, 0.01, 1500, 0.00001)
 
 	// Test 2: Derivata a doua
 	system2 := CreateNewSystem(lambdas, mu, K)
-	SecondDerivativeAlgorithm(system2, 0.01, 100, 0.001)
+	// simplificat pentru precizie redusa: 0.01, 100, 0.001
+	SecondDerivativeAlgorithm(system2, 0.005, 1000, 0.00001)
 
 	// Test 3: Pairwise
 	system3 := CreateNewSystem(lambdas, mu, K)
@@ -433,7 +437,8 @@ func main() {
 		{0, 1}, {0, 2}, {0, 3},
 		{1, 2}, {1, 3}, {2, 3},
 	}
-	PairwiseAlgorithm(system3, topology, 0.05, 200, 0.01)
+	// simplificat pentru precizie redusa: 0.05, 200, 0.001
+	PairwiseAlgorithm(system3, topology, 0.02, 500, 0.00001)
 
 	// Sumar
 	fmt.Println("\n" + strings.Repeat("=", 60))
