@@ -1,0 +1,286 @@
+\documentclass{beamer}
+\usepackage[romanian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+
+\title{Alocarea Optimă a Resurselor în Sisteme Distribuite}
+\subtitle{O Abordare Microeconomică}
+\author{Damian Alexandru \and Horneț Alex-Andrei \and Opran Andrei}
+\institute{Sisteme Distribuite \\ Conf. Dr. Andrei Pătrașcu}
+\date{}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% ================== CUPRINS ==================
+\begin{frame}{Cuprins}
+\tableofcontents
+\end{frame}
+
+% ================== INTRODUCERE ==================
+\section{Introducere}
+
+\begin{frame}{Problema Alocării Fișierelor (FAP)}
+\begin{block}{Context}
+\begin{itemize}
+    \item Sisteme distribuite = agenți de calcul care partajează resurse
+    \item Resurse divizibile: fișiere mari, baze de date
+    \item Obiectiv: \textbf{maximizarea performanței}
+\end{itemize}
+\end{block}
+
+\begin{block}{Abordare Microeconomică}
+\begin{itemize}
+    \item Fiecare nod = agent economic
+    \item Decizii bazate pe cost/beneficiu
+    \item Negociere descentralizată pentru echilibru global
+\end{itemize}
+\end{block}
+\end{frame}
+
+% ================== MODEL MATEMATIC ==================
+\section{Model Matematic}
+
+\begin{frame}{Parametrii Sistemului}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Variabile:}
+\begin{itemize}
+    \item $N$ = număr de noduri
+    \item $\lambda_i$ = rata de sosire cereri
+    \item $\mu$ = rata de servire
+    \item $x_i$ = fracțiune din resursă
+    \item $K$ = cost comunicare
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Constrângeri:}
+\begin{itemize}
+    \item $\sum_{i=1}^{N} x_i = 1$
+    \item $x_i \geq 0, \forall i$
+    \item $\mu > \lambda \cdot x_i$
+\end{itemize}
+\end{columns}
+
+\vspace{0.5cm}
+\begin{block}{Funcția de Cost}
+\[
+C = \sum_{i=1}^{N} \left(C_i + K \cdot T_i\right)\lambda_i, \quad T_i = \frac{1}{\mu - \lambda \cdot x_i}
+\]
+\end{block}
+\end{frame}
+
+% ================== ALGORITMI ==================
+\section{Algoritmi Implementați}
+
+\begin{frame}{Ciclul de Optimizare}
+\begin{enumerate}
+    \item \textbf{Calcul Local:} Fiecare nod calculează utilitatea marginală $U'_i$
+    \item \textbf{Comunicare:} Nodurile schimbă informații despre $U'_i$
+    \item \textbf{Actualizare:} Ajustarea alocării $x_i$ pe baza diferențelor
+\end{enumerate}
+
+\vspace{0.5cm}
+\begin{alertblock}{3 Algoritmi Implementați}
+\begin{itemize}
+    \item Prima Derivată (Gradient Descent)
+    \item A Doua Derivată (Newton)
+    \item Pairwise Interaction
+\end{itemize}
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{1. Algoritmul Prima Derivată}
+\begin{block}{Caracteristici}
+\begin{itemize}
+    \item Gradient descent clasic
+    \item Pas fix de învățare: $\alpha = 0.01$
+    \item Actualizare: $\Delta x_i = -\alpha \cdot (d_{avg} - d_i)$
+\end{itemize}
+\end{block}
+
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Avantaje:}
+\begin{itemize}
+    \item Simplu și stabil
+    \item Convergență garantată
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Dezavantaje:}
+\begin{itemize}
+    \item Convergență lentă
+    \item Necesită multe iterații ($\sim$1500)
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{2. Algoritmul A Doua Derivată}
+\begin{block}{Caracteristici}
+\begin{itemize}
+    \item Metoda Newton - folosește curbura
+    \item $k_i = \frac{1}{\frac{\partial^2 U}{\partial x_i^2}}$ (factor de scalare)
+    \item Actualizare: $\Delta x_i = -\alpha \cdot k_i \cdot (d_{avg} - d_i)$
+\end{itemize}
+\end{block}
+
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Avantaje:}
+\begin{itemize}
+    \item Convergență mai rapidă
+    \item Pași adaptivi
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Performanță:}
+\begin{itemize}
+    \item $\sim$1000 iterații
+    \item 3× mai rapid decât prima derivată
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{3. Algoritmul Pairwise Interaction}
+\begin{block}{Caracteristici}
+\begin{itemize}
+    \item \textbf{Complet descentralizat}
+    \item Comunicare doar între vecini
+    \item Topologie definită: $\{(i,j)\}$ muchii
+    \item Actualizare: $\Delta x_i = -\alpha \cdot \frac{k_i k_j}{k_i + k_j}\cdot (d_i - d_j)$
+\end{itemize}
+\end{block}
+
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Avantaje:}
+\begin{itemize}
+    \item Cel mai rapid ($<$50 iterații)
+    \item Scalabil
+    \item Fără sincronizare globală
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Observații:}
+\begin{itemize}
+    \item Depinde de topologie
+    \item Ideal pentru sisteme mari
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% ================== REZULTATE ==================
+\section{Rezultate}
+
+\begin{frame}{Comparație Algoritmi}
+\begin{table}
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Algoritm} & \textbf{Iterații} & \textbf{Viteză} & \textbf{Comunicare} \\
+\hline
+Prima Derivată & $\sim$1500 & × & $O(N)$ global \\
+\hline
+A Doua Derivată & $\sim$1000 & ××× & $O(N)$ global \\
+\hline
+Pairwise & $<$50 & ×× & $O(grad)$ local \\
+\hline
+\end{tabular}
+\caption{Tabel pentru compararea performanțelor}
+\end{table}
+
+\vspace{0.3cm}
+\begin{block}{Observații}
+\begin{itemize}
+    \item Toți converg către același cost optim
+    \item Pairwise: cel mai rapid pentru sisteme mari
+    \item A Doua Derivată: cel mai bun raport viteză/stabilitate
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}{Grafic Convergență}
+\begin{center}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{convergence.png}
+    \caption{Evoluția costului pentru cei 3 algoritmi}
+    \label{fig:placeholder}
+\end{figure}
+
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Pairwise:} Convergență rapidă în $<$ 50 iterații
+    \item \textbf{A Doua Derivată:} Convergență lină în $\sim$1000 iterații
+    \item \textbf{Prima Derivată:} Convergență treptată în $\sim$1500 iterații
+\end{itemize}
+\end{frame}
+
+% ================== IMPLEMENTARE ==================
+\section{Implementare}
+
+\begin{frame}{Detalii Implementare}
+\begin{block}{Tehnologii}
+\begin{itemize}
+    \item Limbaj: \textbf{Go} (concurrency nativ)
+    \item Paralelizare: goroutines pentru calcule simultane
+    \item Configurare: JSON (mu, lambdas, K)
+\end{itemize}
+\end{block}
+
+\begin{block}{Structura Nodului}
+\begin{itemize}
+    \item ID, Lambda, Mu, Allocation
+    \item Metode: ComputeFirstDerivative, Compute1onSecondDerivative
+    \item Normalizare și validare constrângeri
+\end{itemize}
+\end{block}
+\end{frame}
+
+% ================== CONCLUZII ==================
+\section{Concluzii}
+
+\begin{frame}{Concluzii}
+\begin{block}{Realizări}
+\begin{itemize}
+    \item Implementare cu succes a 3 algoritmi descentralizați
+    \item Validare experimentală a teoriei microeconomice
+    \item Convergență către echilibrul Nash
+\end{itemize}
+\end{block}
+
+\begin{block}{Avantaje Abordare Descentralizată}
+\begin{itemize}
+    \item Scalabilitate superioară
+    \item Toleranță la erori
+    \item Minimizare comunicare globală (Pairwise)
+\end{itemize}
+\end{block}
+
+\begin{alertblock}{Aplicații Practice}
+CDN-uri, cloud computing, baze de date distribuite, sisteme IoT
+\end{alertblock}
+\end{frame}
+
+\begin{frame}
+\centering
+\Huge{\textbf{Mulțumim!}}
+
+\vspace{1cm}
+
+\vspace{1cm}
+\normalsize
+Repository: \texttt{alex6damian/File-Allocation-Problem}
+\end{frame}
+
+\end{document}
