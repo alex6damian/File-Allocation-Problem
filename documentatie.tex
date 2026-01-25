@@ -63,7 +63,7 @@
 \newpage
 
 % =========================================================================
-% 1. INTRODUCERE (Cerință: context, descriere problemă) [cite: 653]
+% 1. INTRODUCERE (Cerință: context, descriere problemă)
 % =========================================================================
 \section{Introducere}
 
@@ -83,6 +83,12 @@ sistemului distribuit, performanța fiind măsurată prin minimizarea unui cost 
     de răspuns. Astfel, ajungem la concluzia că trebuie să distribuim uniform resursa pe toate nodurile.
 \end{itemize}
 
+% NOTE:
+% Utilitatea marginală este răspunsul la întrebarea: „Cât de mult câștig (sau pierd) dacă mai primesc ÎNCĂ O unitate din resursă?”
+% Utilitatea marginală este reprezentată matematic prin derivata parțială a funcției de cost în raport cu variabila xi​ a nodului respectiv,
+% indicând contribuția specifică a acelui nod la performanța globală dacă i se modifică alocarea
+
+
 În acest proiect se propune și se analizează o abordare \textbf{microeconomică} pentru rezolvarea problemei. Astfel, fiecare nod este considerat un agent
 economic dintr-o piață, care ia decizii bazate pe impactul (costul sau beneficiul) preluării unei cantități de resursă. Sistemele centralizate se scalează
 greu, și pot deveni puncte de eșec. Algoritmii descentralizați din această lucrare, beneficiind de resursele distribuite ale sistemului, permit nodurilor
@@ -90,7 +96,7 @@ să negocieze și să migreze fracțiuni din resursă pentru a atinge un echilib
 timpul de procesare.
 
 % =========================================================================
-% 2. DESCRIEREA ALGORITMULUI SERIAL (Cerință: algoritm serial) [cite: 654]
+% 2. DESCRIEREA ALGORITMULUI SERIAL (Cerință: algoritm serial)
 % =========================================================================
 \section{Descrierea Algoritmului Serial}
 
@@ -148,7 +154,7 @@ Această abordare aduce rezultatele dorite, însă avem următoarele dezavantaje
 
 
 % =========================================================================
-% 3. DESCRIEREA VARIANTEI DISTRIBUITE (SPMD) [cite: 655]
+% 3. DESCRIEREA VARIANTEI DISTRIBUITE (SPMD)
 % =========================================================================
 \section{Descrierea Variantei Distribuite (SPMD)}
 
@@ -357,7 +363,7 @@ Pentru a verifica teoria, am rulat toți trei algoritmi și am analizat rezultat
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{convergence.png}
+\includegraphics[width=1\textwidth]{Implementation/plots/convergence.png}
 \caption{Evoluția costului total pe parcursul iterațiilor pentru cei trei algoritmi. 
 Algoritmul Pairwise converge cel mai rapid (sub 50 iterații), urmat de Algoritmul pe A Doua Derivată 
 (aproximativ 200 iterații). Algoritmul pe Prima Derivată este cel mai lent, necesitând 
@@ -370,7 +376,7 @@ că metodele cu informație de curbură sunt mai eficiente.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{allocations.png}
+\includegraphics[width=1\textwidth]{Implementation/plots/allocations.png}
 \caption{Alocările finale de resurse pe fiecare nod după convergență. Se observă că toți trei 
 algoritmi ajung la aceeași distribuție finală, ceea ce confirmă corectitudinea implementării. 
 Nodul 1 primește cea mai mare parte din resurse (aproximativ 0.48), în timp ce Nodurile 0, 2 și 3 
@@ -383,7 +389,7 @@ sunt datorate toleranțelor numerice (prag $\varepsilon = 10^{-5}$).}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{derivatives.png}
+\includegraphics[width=1\textwidth]{Implementation/plots/derivatives.png}
 \caption{Valorile derivatelor finale pentru fiecare nod, care verifică condiția de echilibru Nash. 
 În echilibru, toți nodurile au derivate aproximativ egale (în jurul valorii 0.12), ceea ce înseamnă 
 că niciun nod nu mai are incentiv să negocieze resurse cu alții. Egalitatea derivatelor este o 
